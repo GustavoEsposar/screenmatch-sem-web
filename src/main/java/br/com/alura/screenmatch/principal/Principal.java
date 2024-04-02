@@ -1,5 +1,7 @@
 package br.com.alura.screenmatch.principal;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -14,6 +16,7 @@ import br.com.alura.screenmatch.service.ConsumoApi;
 import br.com.alura.screenmatch.service.ConverteDados;
 
 public class Principal {
+    private List<Episodio> episodios;
     private List<DadosTemporada> temporadas = new ArrayList<>(); 
     private Scanner leitura = new Scanner(System.in);
     private ConsumoApi consumoApi = new ConsumoApi();
@@ -37,6 +40,7 @@ public class Principal {
 
         top5Epsodios();
         todosEpisodios();
+        episodiosPorData();
     }
 
     private void exibeTemporadas(String json,DadosSerie dados) {
@@ -66,7 +70,7 @@ public class Principal {
     }
 
     private void todosEpisodios() {
-        List<Episodio> episodios = 
+        episodios = 
             temporadas.stream()
             .flatMap(t -> t.episodios().stream()
                 .map(d -> new Episodio(t.numero(), d))
@@ -75,6 +79,23 @@ public class Principal {
         ;
         
         episodios.forEach(System.out::println);
+    }
+
+    private void episodiosPorData() {
+        System.out.println("\nA partir de que ano você deseja ver os episódios?");
+        var ano = leitura.nextInt();
+        leitura.nextLine();
+
+        LocalDate dataBusca = LocalDate.of(ano, 1, 1);
+
+        DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        episodios.stream()
+            .filter(e -> e.getDataLancamento() != null && e.getDataLancamento().isAfter(dataBusca))
+            .forEach(e -> System.out.println(
+                "Temporada: " +e.getTemporada() +
+                " Episodio: " + e.getTitulo() +
+                " Data: " + e.getDataLancamento().format(dtf)
+            ));
     }
 
 }
