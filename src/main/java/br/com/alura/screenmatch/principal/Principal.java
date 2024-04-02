@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 import br.com.alura.screenmatch.model.DadosEpsodio;
 import br.com.alura.screenmatch.model.DadosSerie;
 import br.com.alura.screenmatch.model.DadosTemporada;
+import br.com.alura.screenmatch.model.Episodio;
 import br.com.alura.screenmatch.service.ConsumoApi;
 import br.com.alura.screenmatch.service.ConverteDados;
 
@@ -26,10 +27,16 @@ public class Principal {
 
         enderecoPesquisa = ENDERECO + "&t=" + nomeSerie.replace(" ", "+");
 		var json = consumoApi.obterDados(enderecoPesquisa);
-		DadosSerie dados = cd.obterDados(json, DadosSerie.class);
+        try {
+            DadosSerie dados = cd.obterDados(json, DadosSerie.class);
+            exibeTemporadas(json, dados);
+        } catch (NullPointerException e) {
+            System.out.println("\nSérie não encontrada no banco de dados!\n");
+            exibeMenu();
+        }
 
-        exibeTemporadas(json, dados);
         top5Epsodios();
+        todosEpisodios();
     }
 
     private void exibeTemporadas(String json,DadosSerie dados) {
@@ -39,6 +46,7 @@ public class Principal {
 			temporadas.add(dadosTemporada);
 		}
         temporadas.forEach(System.out::println);
+        System.out.println();
     }
 
     private void top5Epsodios() {
@@ -49,12 +57,24 @@ public class Principal {
 
         System.out.println();
         System.out.println("Top 5 episodios:");
-        
+
         dadosEpisodios.stream()
             .filter(e -> !e.avaliacao().equalsIgnoreCase("N/A"))
             .sorted(Comparator.comparing(DadosEpsodio::avaliacao).reversed())
             .limit(5)
-            .forEach(System.out::println);        
+            .forEach(System.out::println);
+    }
+
+    private void todosEpisodios() {
+        List<Episodio> episodios = 
+            temporadas.stream()
+            .flatMap(t -> t.episodios().stream()
+                .map(d -> new Episodio(t.numero(), d))
+            )
+            .collect(Collectors.toList());
+        ;
+        
+        episodios.forEach(System.out::println);
     }
 
 }
