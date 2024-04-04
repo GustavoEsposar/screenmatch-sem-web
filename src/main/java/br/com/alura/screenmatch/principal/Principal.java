@@ -5,6 +5,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.Scanner;
 import java.util.stream.Collectors;
 
@@ -38,9 +39,10 @@ public class Principal {
             exibeMenu();
         }
 
-        top5Epsodios();
+        //top5Epsodios();
         todosEpisodios();
-        episodiosPorData();
+        //episodiosPorData();
+        buscarEpisodio();
     }
 
     private void exibeTemporadas(String json,DadosSerie dados) {
@@ -79,6 +81,22 @@ public class Principal {
         ;
         
         episodios.forEach(System.out::println);
+    }
+
+    private void buscarEpisodio() {
+        System.out.println("Digite o nome do episodio que deseja buscar: ");
+        var trechoTitulo = leitura.nextLine();
+
+        //vai aprarecer muito no ava web
+        Optional<Episodio> ep = episodios.stream()
+            .filter(e -> e.getTitulo().toLowerCase().contains(trechoTitulo.toLowerCase()))
+            .findFirst();
+
+        if (ep.isPresent()) {
+            System.out.printf("Episódio buscado foi encontrado na temporada %s", ep.get().getTemporada());
+            return;
+        }
+        System.out.println("Referencia não encontrada!");
     }
 
     private void episodiosPorData() {
