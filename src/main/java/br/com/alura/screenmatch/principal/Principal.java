@@ -27,50 +27,54 @@ public class Principal {
     private String enderecoPesquisa;
     private final String ENDERECO = "https://www.omdbapi.com/?apikey=7215ebcb";
 
-    public void exibeMenu() {
-        System.out.println("Digite o nome da série para busca: ");
-        var nomeSerie = leitura.nextLine();
-
-        enderecoPesquisa = ENDERECO + "&t=" + nomeSerie.replace(" ", "+");
-		var json = consumoApi.obterDados(enderecoPesquisa);
+    public void iniciar() {
+        lerNomeSerie();
         try {
-            DadosSerie dados = cd.obterDados(json, DadosSerie.class);
-            exibeTemporadas(json, dados);
+            consultarEExtrairDados();
         } catch (NullPointerException e) {
             System.out.println("\nSérie não encontrada no banco de dados!\n");
-            exibeMenu();
+            iniciar();
         }
 
-        //top5Epsodios();
-        todosEpisodios();
-        //episodiosPorData();
-        //buscarEpisodio();
+        extrairTodosEpisodios();
         avaliacaoPorTemporada();
         estatisticasDaSerie();
+        exibirTodosEpisodios();
+        top5Episodios();
+        //episodiosPorData();
+        //buscarEpisodio();
     }
 
     private void lerNomeSerie() {
-        
+        System.out.println("Digite o nome da série para busca: ");
+        var nomeSerie = leitura.nextLine();
+        enderecoPesquisa = ENDERECO + "&t=" + nomeSerie.replace(" ", "+");
     }
 
-    private void exibeTemporadas(String json,DadosSerie dados) {
+    private void consultarEExtrairDados() {
+		var json = consumoApi.obterDados(enderecoPesquisa);
+        DadosSerie dados = cd.obterDados(json, DadosSerie.class);
+
+        extrairDadosTemporadas(json, dados);
+    }
+
+    private void extrairDadosTemporadas(String json,DadosSerie dados) {
 		for(int i = 1; i < dados.totalTemporadas(); i++) {
 			json = consumoApi.obterDados(enderecoPesquisa + "&season=" + i);
 			DadosTemporada dadosTemporada = cd.obterDados(json, DadosTemporada.class);
 			temporadas.add(dadosTemporada);
 		}
-        temporadas.forEach(System.out::println);
-        System.out.println();
+        //temporadas.forEach(System.out::println);
+        //System.out.println();
     }
 
-    private void top5Epsodios() {
+    private void top5Episodios() {
         List<DadosEpsodio> dadosEpisodios = 
             temporadas.stream()
             .flatMap(t -> t.episodios().stream())
             .collect(Collectors.toList());
 
-        System.out.println();
-        System.out.println("Top 5 episodios:");
+        System.out.println("\nTop 5 episodios:");
 
         dadosEpisodios.stream()
             .filter(e -> !e.avaliacao().equalsIgnoreCase("N/A"))
@@ -79,7 +83,7 @@ public class Principal {
             .forEach(System.out::println);
     }
 
-    private void todosEpisodios() {
+    private void extrairTodosEpisodios() {
         episodios = 
             temporadas.stream()
             .flatMap(t -> t.episodios().stream()
@@ -87,10 +91,13 @@ public class Principal {
             )
             .collect(Collectors.toList());
         ;
-        
+    }
+
+    private void exibirTodosEpisodios() {
         episodios.forEach(System.out::println);
         System.out.println();
     }
+
 
     private void buscarEpisodio() {
         System.out.println("Digite o nome do episodio que deseja buscar: ");
@@ -111,7 +118,7 @@ public class Principal {
     private void episodiosPorData() {
         System.out.println("\nA partir de que ano você deseja ver os episódios?");
         var ano = leitura.nextInt();
-        leitura.nextLine();
+        //leitura.nextLine();
 
         LocalDate dataBusca = LocalDate.of(ano, 1, 1);
 
@@ -139,8 +146,13 @@ public class Principal {
             .stream()
             .filter(e -> e.getAvaliacao() > 0.0)
             .collect(Collectors.summarizingDouble(Episodio::getAvaliacao));
-        
-        System.out.println(est);
-    }
+    
+        System.out.printf(
+            "\nMédia de avaliação: %.2f" +  // Ajuste para duas casas decimais
+            "\nMaior avaliação de episódio: %.2f" +  // Ajuste para duas casas decimais
+            "\nMenor avaliação de episódio: %.2f\n",  // Ajuste para duas casas decimais
+            est.getAverage(), est.getMax(), est.getMin()
+        ); 
+    }    
 
 }
