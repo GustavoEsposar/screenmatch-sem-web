@@ -4,7 +4,9 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.DoubleSummaryStatistics;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Scanner;
 import java.util.stream.Collectors;
@@ -21,7 +23,7 @@ public class Principal {
     private List<DadosTemporada> temporadas = new ArrayList<>(); 
     private Scanner leitura = new Scanner(System.in);
     private ConsumoApi consumoApi = new ConsumoApi();
-    private ConverteDados cd = new ConverteDados();
+    private ConverteDados cd = new ConverteDados(); 
     private String enderecoPesquisa;
     private final String ENDERECO = "https://www.omdbapi.com/?apikey=7215ebcb";
 
@@ -42,7 +44,13 @@ public class Principal {
         //top5Epsodios();
         todosEpisodios();
         //episodiosPorData();
-        buscarEpisodio();
+        //buscarEpisodio();
+        avaliacaoPorTemporada();
+        estatisticasDaSerie();
+    }
+
+    private void lerNomeSerie() {
+        
     }
 
     private void exibeTemporadas(String json,DadosSerie dados) {
@@ -81,6 +89,7 @@ public class Principal {
         ;
         
         episodios.forEach(System.out::println);
+        System.out.println();
     }
 
     private void buscarEpisodio() {
@@ -114,6 +123,24 @@ public class Principal {
                 " Episodio: " + e.getTitulo() +
                 " Data: " + e.getDataLancamento().format(dtf)
             ));
+    }
+
+    private void avaliacaoPorTemporada() {
+        Map<Integer, Double> avaliacaoMap = episodios
+            .stream()
+            .filter(e -> e.getAvaliacao() > 0.0)
+            .collect(Collectors.groupingBy(Episodio::getTemporada, Collectors.averagingDouble(Episodio::getAvaliacao)));
+
+        System.out.println(avaliacaoMap);
+    }
+
+    private void estatisticasDaSerie() {
+        DoubleSummaryStatistics est = episodios
+            .stream()
+            .filter(e -> e.getAvaliacao() > 0.0)
+            .collect(Collectors.summarizingDouble(Episodio::getAvaliacao));
+        
+        System.out.println(est);
     }
 
 }
